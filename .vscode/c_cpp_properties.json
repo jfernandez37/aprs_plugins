@@ -6,7 +6,7 @@
           "limitSymbolsToIncludedHeaders": false
         },
         "includePath": [
-          "/opt/ros/iron/include/",
+          "/opt/ros/iron/include/**",
           "/home/ubuntu/aprs_ws/src/aprs_plugins/include/",
           "/usr/include/gz/**"
         ],

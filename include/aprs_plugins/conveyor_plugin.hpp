@@ -5,7 +5,12 @@
 #include <gz/sim/EntityComponentManager.hh>
 #include <gz/sim/Model.hh>
 #include <gz/sim/Joint.hh>
- 
+
+#include <rclcpp/rclcpp.hpp>
+
+
+#include <thread>
+
 namespace aprs_plugins
 {
   class ConveyorPlugin:
@@ -30,13 +35,19 @@ namespace aprs_plugins
       
       gz::sim::Joint _belt_joint;
       
-      double _belt_velocity = 0.1;
+      int _direction = 1;
+      double _belt_velocity = -0.1;
       double _max_velocity = 0.1;
       double _power = 0.1;
-      double _conveyor_limit = 0.2;
+      double _conveyor_limit = 0.4;
       double _belt_position = 0.0;
 
       std::vector<double>_reset_positions{0};
+
+      rclcpp::Node::SharedPtr _ros_node;
+      rclcpp::executors::MultiThreadedExecutor::SharedPtr executor_;
+      bool stop_{false};
+      std::thread thread_executor_spin_;
   };
 }
 
