@@ -2,7 +2,6 @@
 #include <gz/sim/components/JointVelocityCmd.hh>
 #include <gz/sim/components/JointPosition.hh>
 #include <aprs_plugins/conveyor_plugin.hpp>
-#include <time.h>
 
 // Include a line in your source file for each interface implemented.
 GZ_ADD_PLUGIN(
@@ -29,10 +28,12 @@ void ConveyorPlugin::Configure(const gz::sim::Entity &_entity,
   _model = gz::sim::Model(_entity);
   _belt_joint = gz::sim::Joint(_model.JointByName(_ecm, "belt_joint"));
   _belt_joint.EnablePositionCheck(_ecm, true);
+  _max_velocity = _sdf->GetElementImpl("max_velocity")->Get<double>();
+
   gzmsg << _belt_joint.Name(_ecm).value() << std::endl;
  // _ros_node = std::make_shared<rclcpp::Node>("conveyor_plugin");
   
-  std::vector<std::string> arguments = {"--ros-args","-p","use_sim_time:=true"};
+  // std::vector<std::string> arguments = {"--ros-args","-p","use_sim_time:=true"};
   auto sdfPtr = const_cast<sdf::Element *>(_sdf.get());
   std::string ns = "/";
   
@@ -49,29 +50,26 @@ void ConveyorPlugin::Configure(const gz::sim::Entity &_entity,
     }
 
     // Get list of remapping rules from SDF
-    if (sdfRos->HasElement("remapping")) {
-      sdf::ElementPtr argument_sdf = sdfRos->GetElement("remapping");
+    // if (sdfRos->HasElement("remapping")) {
+    //   sdf::ElementPtr argument_sdf = sdfRos->GetElement("remapping");
 
-      arguments.push_back(RCL_ROS_ARGS_FLAG);
-      while (argument_sdf) {
-        std::string argument = argument_sdf->Get<std::string>();
-        arguments.push_back(RCL_REMAP_FLAG);
-        arguments.push_back(argument);
-        argument_sdf = argument_sdf->GetNextElement("remapping");
-      }
-    }
+    //   arguments.push_back(RCL_ROS_ARGS_FLAG);
+    //   while (argument_sdf) {
+    //     std::string argument = argument_sdf->Get<std::string>();
+    //     arguments.push_back(RCL_REMAP_FLAG);
+    //     arguments.push_back(argument);
+    //     argument_sdf = argument_sdf->GetNextElement("remapping");
+    //   }
+    // }
   }
   
-  std::vector<const char *> argv;
-  for (const auto & arg : arguments) {
-    argv.push_back(reinterpret_cast<const char *>(arg.data()));
-  }
+  // std::vector<const char *> argv;
+  // for (const auto & arg : arguments) {
+  //   argv.push_back(reinterpret_cast<const char *>(arg.data()));
+  // }
   // Create a default context, if not already
   if(!rclcpp::ok()) {
-    rclcpp::init(
-      static_cast<int>(argv.size()), argv.data(), rclcpp::InitOptions(),
-      rclcpp::SignalHandlerOptions::None);
-
+    rclcpp::init(0, nullptr, rclcpp::InitOptions());
   }
 
   std::string node_name = "conveyor_node";
@@ -87,15 +85,33 @@ void ConveyorPlugin::Configure(const gz::sim::Entity &_entity,
       }
     };
   thread_executor_spin_ = std::thread(spin);
+
+  // Publisher
+  // conveyor_state_publisher_ = _ros_node->create_publisher<conveyor_interfaces::msg::ConveyorState>("aprs_conveyor/conveyor_state", 10);
+  // conveyor_state_publisher_timer_ = _ros_node->create_wall_timer(std::chrono::duration<double>(100000000), std::bind(&ConveyorPlugin::robot_state_callback, this));
+
+  // Services
+  // enable_conveyor_service_ = _ros_node->create_service<conveyor_interfaces::srv::EnableConveyor>(
+  //   "/aprs_conveyor/enable_conveyor", 
+  //   std::bind(
+  //     &ConveyorPlugin::enable_conveyor_callback, this,
+  //     std::placeholders::_1, std::placeholders::_2));
+  // enable_conveyor_service_ = _ros_node->create_service<conveyor_interfaces::srv::EnableConveyor>("/aprs_conveyor/enable_conveyor", &set_conveyor_state_callback);
+
 }
 
 void ConveyorPlugin::PreUpdate(const gz::sim::UpdateInfo &_info,
                       gz::sim::EntityComponentManager &_ecm)
 { 
-  // gzmsg << std::to_string(_ros_node->get_clock()->now().nanoseconds()) << std::endl;
+  // gzmsg << "preupdate" << std::endl;
 
-
-  _belt_joint.SetVelocity(_ecm, {_direction * _belt_velocity});
+  if(!_enabled){
+    _belt_velocity = 0;
+    _belt_direction = 0;
+    _belt_joint.SetVelocity(_ecm, {_belt_velocity});
+    return;
+  }
+  _belt_joint.SetVelocity(_ecm, {((_belt_direction==0)?1:-1) * _belt_velocity});
 
   double position = 0.0;
   std::optional<std::vector<double>> position_vector = _belt_joint.Position(_ecm);
@@ -108,10 +124,71 @@ void ConveyorPlugin::PreUpdate(const gz::sim::UpdateInfo &_info,
   }
   if(abs(_belt_position) >= _conveyor_limit){
     _belt_joint.ResetPosition(_ecm, _reset_positions);
-    _direction = _direction * -1;
+    _belt_direction = (_belt_direction + 1)%2 ;
   }
 }
 
+// void ConveyorPlugin::robot_state_callback(){
+//   auto state_msg = conveyor_interfaces::msg::ConveyorState();
+//   state_msg.enabled = _enabled;
+//   state_msg.speed = _belt_velocity;
+//   state_msg.direction = _belt_direction;
+//   conveyor_state_publisher_->publish(state_msg);
+// }
 
+void ConveyorPlugin::enable_conveyor_callback(
+  const std::shared_ptr<conveyor_interfaces::srv::EnableConveyor::Request> request, 
+  std::shared_ptr<conveyor_interfaces::srv::EnableConveyor::Response> response){
+  if(request->enable && _enabled){
+    gzmsg << "Conveyor is already enabled" << std::endl;
+    response->message = "Conveyor is already enabled";
+    response->success = false;
+    return;
+  }
+
+  if(!request->enable && !_enabled){
+    gzmsg << "Conveyor is already disabled" << std::endl;
+    response->message = "Conveyor is already disabled";
+    response->success = false;
+    return;
+  }
+
+  _enabled = request->enable;
+  response->message = "Conveyor is now " + _enabled?"enabled":"disabled";
+  response->success = true;
+}
+
+
+// void ConveyorPlugin::set_conveyor_state_callback(
+//   const std::shared_ptr<conveyor_interfaces::srv::SetConveyorState::Request> request, 
+//   std::shared_ptr<conveyor_interfaces::srv::SetConveyorState::Response> response){
+//     if(!_enabled){
+//       gzmsg << "Conveyor is disabled and must be enabled to set state" << std::endl;
+//       response->message = "Conveyor is disabled and must be enabled to set state";
+//       response->success = false;
+//       return;
+//     }
+
+//     if(request->speed < 0 || request->speed >= _max_velocity){
+//       gzmsg << "Speed must be between 0 and " << std::to_string (_max_velocity) << std::endl;
+//       response->message = "Speed must be between 0 and " + std::to_string (_max_velocity);
+//       response->success = false;
+//       return;
+//     }
+
+//     if (request->direction != 0 && request->direction != 1){
+//       gzmsg << "Direction must be either 0 (forward) or 1 (backwards)" << std::endl;
+//       response->message = "Direction must be either 0 (forward) or 1 (backwards)";
+//       response->success = false;
+//       return;
+//     }
+
+//     gzmsg << "Setting speed to " + std::to_string(request->speed) + " and direction to " + ((request->direction==0)?"forward":"backward");
+
+//     _belt_velocity = request->speed;
+//     _belt_direction = (request->direction==0)?1:-1;
+//     response->message = "Set speed to " + std::to_string(request->speed) + " and direction to " + ((request->direction==0)?"forward":"backward");
+//     response->success = true;
+// }
 
 

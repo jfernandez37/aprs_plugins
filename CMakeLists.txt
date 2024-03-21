@@ -3,6 +3,7 @@ project(aprs_plugins)
 
 set(THIS_PACKAGE_INCLUDE_DEPENDS
   rclcpp
+  conveyor_interfaces
 )
 
 # find dependencies
