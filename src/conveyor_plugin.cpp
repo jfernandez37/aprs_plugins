@@ -27,34 +27,16 @@ void ConveyorPlugin::Configure(const gz::sim::Entity &_entity,
 {
   _model = gz::sim::Model(_entity);
   _belt_joint = gz::sim::Joint(_model.JointByName(_ecm, "belt_joint"));
-
-  
-
-
-  // _max_velocity = _sdf->GetElementImpl("max_velocity")->Get<double>();
   
   gzmsg << _belt_joint.Name(_ecm).value() << std::endl;
 }
 
 void ConveyorPlugin::PreUpdate(const gz::sim::UpdateInfo &_info,
                       gz::sim::EntityComponentManager &_ecm)
-{
-  
-  // auto belt_position = _belt_joint.Position(_ecm);
-
-  // if (belt_position.has_value()){
-  //   _belt_position = belt_position.value()[0];
-  // } else{
-  //   _belt_position = 0.0;
-    
-  // }  
-  // gzmsg << std::to_string(_belt_position) << std::endl;
-  
+{ 
   if(_belt_position >= _conveyor_limit){
     _belt_joint.ResetPosition(_ecm, _reset_positions);
   }
-
-  // const std::vector<double>velocities{_belt_velocity};
 
   gz::sim::components::JointVelocityCmd* jvc_comp = nullptr;
 
@@ -67,7 +49,7 @@ void ConveyorPlugin::PreUpdate(const gz::sim::UpdateInfo &_info,
     jvc_comp = _ecm.CreateComponent(_joint, gz::sim::components::JointVelocityCmd({0.0}));
 
   } else {
-    jvc_comp->Data() = {0.1};
+    jvc_comp->Data() = {_belt_velocity};
     _ecm.SetComponentData<gz::sim::components::JointVelocityCmd>(_joint, jvc_comp->Data());
   }
 
