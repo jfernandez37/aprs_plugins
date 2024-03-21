@@ -40,15 +40,15 @@ void ConveyorPlugin::PreUpdate(const gz::sim::UpdateInfo &_info,
                       gz::sim::EntityComponentManager &_ecm)
 {
   
-  auto belt_position = _belt_joint.Position(_ecm);
+  // auto belt_position = _belt_joint.Position(_ecm);
 
-  if (belt_position.has_value()){
-    _belt_position = belt_position.value()[0];
-  } else{
-    _belt_position = 0.0;
+  // if (belt_position.has_value()){
+  //   _belt_position = belt_position.value()[0];
+  // } else{
+  //   _belt_position = 0.0;
     
-  }  
-  gzmsg << std::to_string(_belt_position) << std::endl;
+  // }  
+  // gzmsg << std::to_string(_belt_position) << std::endl;
   
   if(_belt_position >= _conveyor_limit){
     _belt_joint.ResetPosition(_ecm, _reset_positions);
@@ -66,7 +66,6 @@ void ConveyorPlugin::PreUpdate(const gz::sim::UpdateInfo &_info,
 
     jvc_comp = _ecm.CreateComponent(_joint, gz::sim::components::JointVelocityCmd({0.0}));
 
-    gzmsg << "NULLPTR" << std::endl;
   } else {
     jvc_comp->Data() = {0.1};
     _ecm.SetComponentData<gz::sim::components::JointVelocityCmd>(_joint, jvc_comp->Data());
@@ -75,21 +74,11 @@ void ConveyorPlugin::PreUpdate(const gz::sim::UpdateInfo &_info,
   gz::sim::components::JointPosition* jp_comp = nullptr;
   jp_comp = _ecm.Component<gz::sim::components::JointPosition>(_joint);
 
-  if (jvc_comp == nullptr) {
-
+  if (jp_comp == nullptr) {
     jp_comp = _ecm.CreateComponent(_joint, gz::sim::components::JointPosition());
-
-    gzmsg << "NULLPTR" << std::endl;
   } else {
-    gzmsg << jp_comp->Data().size() << std::endl;
+    _belt_position = jp_comp->Data()[0];
   }
-
-  // _belt_joint.ResetVelocity(_ecm, velocities);
-  // if(_belt_joint.Velocity(_ecm).has_value()){
-  //   gzmsg << _belt_joint.Velocity(_ecm).value()[0] << std::endl;
-  // }else{
-  //   gzmsg << "NO VALUE" << std::endl;
-  // }
 }
 
 

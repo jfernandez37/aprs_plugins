@@ -33,7 +33,7 @@ namespace aprs_plugins
       double _belt_velocity = 0.1;
       double _max_velocity = 0.1;
       double _power = 0.1;
-      double _conveyor_limit = 0.4;
+      double _conveyor_limit = 0.2;
       double _belt_position = 0.0;
 
       std::vector<double>_reset_positions{0};
