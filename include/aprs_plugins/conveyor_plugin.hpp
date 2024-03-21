@@ -44,7 +44,7 @@ namespace aprs_plugins
 
     // Conveyor callbacks
     // void robot_state_callback();
-    void enable_conveyor_callback(const std::shared_ptr<conveyor_interfaces::srv::EnableConveyor::Request> request, std::shared_ptr<conveyor_interfaces::srv::EnableConveyor::Response> response);
+    // void enable_conveyor_callback(const std::shared_ptr<conveyor_interfaces::srv::EnableConveyor::Request> request, std::shared_ptr<conveyor_interfaces::srv::EnableConveyor::Response> response);
     // void set_conveyor_state_callback(const std::shared_ptr<conveyor_interfaces::srv::SetConveyorState::Request> request, std::shared_ptr<conveyor_interfaces::srv::SetConveyorState::Response> response);
 
     private: 
@@ -64,21 +64,21 @@ namespace aprs_plugins
 
       std::vector<double>_reset_positions{0};
 
-      // rclcpp::Node::SharedPtr _ros_node;
-      // rclcpp::executors::MultiThreadedExecutor::SharedPtr executor_;
-      // bool stop_{false};
-      // std::thread thread_executor_spin_;
+      rclcpp::Node::SharedPtr _ros_node;
+      rclcpp::executors::MultiThreadedExecutor::SharedPtr executor_;
+      bool stop_{false};
+      std::thread thread_executor_spin_;
 
       gz::transport::Node gz_node;
 
     //   // Publishers
-      // rclcpp::Publisher<conveyor_interfaces::msg::ConveyorState>::SharedPtr conveyor_state_publisher_;
+      rclcpp::Publisher<conveyor_interfaces::msg::ConveyorState>::SharedPtr conveyor_state_publisher_;
 
     //   // Timer
       // rclcpp::TimerBase::SharedPtr conveyor_state_publisher_timer_;
       
     //   // Services
-      rclcpp::Service<conveyor_interfaces::srv::EnableConveyor>::SharedPtr enable_conveyor_service_;
+      // rclcpp::Service<conveyor_interfaces::srv::EnableConveyor>::SharedPtr enable_conveyor_service_;
     //   rclcpp::Service<conveyor_interfaces::srv::SetConveyorState>::SharedPtr set_conveyor_state_service_;
   };
 }

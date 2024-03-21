@@ -31,63 +31,67 @@ void ConveyorPlugin::Configure(const gz::sim::Entity &_entity,
   _max_velocity = _sdf->GetElementImpl("max_velocity")->Get<double>();
 
   gzmsg << _belt_joint.Name(_ecm).value() << std::endl;
- // _ros_node = std::make_shared<rclcpp::Node>("conveyor_plugin");
+//  // _ros_node = std::make_shared<rclcpp::Node>("conveyor_plugin");
   
-  // std::vector<std::string> arguments = {"--ros-args","-p","use_sim_time:=true"};
-  auto sdfPtr = const_cast<sdf::Element *>(_sdf.get());
-  std::string ns = "/";
+//   // std::vector<std::string> arguments = {"--ros-args","-p","use_sim_time:=true"};
+//   auto sdfPtr = const_cast<sdf::Element *>(_sdf.get());
+//   std::string ns = "/";
   
-  if (sdfPtr->HasElement("ros")) {
-    sdf::ElementPtr sdfRos = sdfPtr->GetElement("ros");
+//   if (sdfPtr->HasElement("ros")) {
+//     sdf::ElementPtr sdfRos = sdfPtr->GetElement("ros");
 
-    // Set namespace if tag is present
-    if (sdfRos->HasElement("namespace")) {
-      ns = sdfRos->GetElement("namespace")->Get<std::string>();
-      // prevent exception: namespace must be absolute, it must lead with a '/'
-      if (ns.empty() || ns[0] != '/') {
-        ns = '/' + ns;
-      }
-    }
+//     // Set namespace if tag is present
+//     if (sdfRos->HasElement("namespace")) {
+//       ns = sdfRos->GetElement("namespace")->Get<std::string>();
+//       // prevent exception: namespace must be absolute, it must lead with a '/'
+//       if (ns.empty() || ns[0] != '/') {
+//         ns = '/' + ns;
+//       }
+//     }
 
-    // Get list of remapping rules from SDF
-    // if (sdfRos->HasElement("remapping")) {
-    //   sdf::ElementPtr argument_sdf = sdfRos->GetElement("remapping");
+//     // Get list of remapping rules from SDF
+//     // if (sdfRos->HasElement("remapping")) {
+//     //   sdf::ElementPtr argument_sdf = sdfRos->GetElement("remapping");
 
-    //   arguments.push_back(RCL_ROS_ARGS_FLAG);
-    //   while (argument_sdf) {
-    //     std::string argument = argument_sdf->Get<std::string>();
-    //     arguments.push_back(RCL_REMAP_FLAG);
-    //     arguments.push_back(argument);
-    //     argument_sdf = argument_sdf->GetNextElement("remapping");
-    //   }
-    // }
+//     //   arguments.push_back(RCL_ROS_ARGS_FLAG);
+//     //   while (argument_sdf) {
+//     //     std::string argument = argument_sdf->Get<std::string>();
+//     //     arguments.push_back(RCL_REMAP_FLAG);
+//     //     arguments.push_back(argument);
+//     //     argument_sdf = argument_sdf->GetNextElement("remapping");
+//     //   }
+//     // }
+//   }
+  
+//   // std::vector<const char *> argv;
+//   // for (const auto & arg : arguments) {
+//   //   argv.push_back(reinterpret_cast<const char *>(arg.data()));
+//   // }
+//   // Create a default context, if not already
+//   if(!rclcpp::ok()) {
+//     rclcpp::init(0, nullptr, rclcpp::InitOptions());
+//   }
+
+//   std::string node_name = "conveyor_node";
+
+//   _ros_node = rclcpp::Node::make_shared(node_name, ns);
+//   executor_ = std::make_shared<rclcpp::executors::MultiThreadedExecutor>();
+//   executor_->add_node(_ros_node);
+//   stop_ = false;
+//   auto spin = [this]()
+//     {
+//       while (rclcpp::ok() && !stop_) {
+//         executor_->spin_once();
+//       }
+//     };
+//   thread_executor_spin_ = std::thread(spin);
+  if (!rclcpp::ok()) {
+      rclcpp::init(0, nullptr);
   }
-  
-  // std::vector<const char *> argv;
-  // for (const auto & arg : arguments) {
-  //   argv.push_back(reinterpret_cast<const char *>(arg.data()));
-  // }
-  // Create a default context, if not already
-  if(!rclcpp::ok()) {
-    rclcpp::init(0, nullptr, rclcpp::InitOptions());
-  }
-
-  std::string node_name = "conveyor_node";
-
-  _ros_node = rclcpp::Node::make_shared(node_name, ns);
-  executor_ = std::make_shared<rclcpp::executors::MultiThreadedExecutor>();
-  executor_->add_node(_ros_node);
-  stop_ = false;
-  auto spin = [this]()
-    {
-      while (rclcpp::ok() && !stop_) {
-        executor_->spin_once();
-      }
-    };
-  thread_executor_spin_ = std::thread(spin);
-
+  this->_ros_node = std::make_shared<rclcpp::Node>("conveyor_plugin");
   // Publisher
-  // conveyor_state_publisher_ = _ros_node->create_publisher<conveyor_interfaces::msg::ConveyorState>("aprs_conveyor/conveyor_state", 10);
+  // this->conveyor_state_publisher_ = this->_ros_node->create_publisher<conveyor_interfaces::msg::ConveyorState>(
+  //   "aprs_conveyor/conveyor_state", 10);
   // conveyor_state_publisher_timer_ = _ros_node->create_wall_timer(std::chrono::duration<double>(100000000), std::bind(&ConveyorPlugin::robot_state_callback, this));
 
   // Services
@@ -105,27 +109,27 @@ void ConveyorPlugin::PreUpdate(const gz::sim::UpdateInfo &_info,
 { 
   // gzmsg << "preupdate" << std::endl;
 
-  if(!_enabled){
-    _belt_velocity = 0;
-    _belt_direction = 0;
-    _belt_joint.SetVelocity(_ecm, {_belt_velocity});
-    return;
-  }
-  _belt_joint.SetVelocity(_ecm, {((_belt_direction==0)?1:-1) * _belt_velocity});
+//   if(!_enabled){
+//     _belt_velocity = 0;
+//     _belt_direction = 0;
+//     _belt_joint.SetVelocity(_ecm, {_belt_velocity});
+//     return;
+//   }
+//   _belt_joint.SetVelocity(_ecm, {((_belt_direction==0)?1:-1) * _belt_velocity});
 
-  double position = 0.0;
-  std::optional<std::vector<double>> position_vector = _belt_joint.Position(_ecm);
-  if(position_vector.has_value()){
-    if(position_vector.value().size() > 0){
-      _belt_position = position_vector.value()[0];
-    }else{
-      _belt_position = 0.0;
-    }
-  }
-  if(abs(_belt_position) >= _conveyor_limit){
-    _belt_joint.ResetPosition(_ecm, _reset_positions);
-    _belt_direction = (_belt_direction + 1)%2 ;
-  }
+//   double position = 0.0;
+//   std::optional<std::vector<double>> position_vector = _belt_joint.Position(_ecm);
+//   if(position_vector.has_value()){
+//     if(position_vector.value().size() > 0){
+//       _belt_position = position_vector.value()[0];
+//     }else{
+//       _belt_position = 0.0;
+//     }
+//   }
+//   if(abs(_belt_position) >= _conveyor_limit){
+//     _belt_joint.ResetPosition(_ecm, _reset_positions);
+//     _belt_direction = (_belt_direction + 1)%2 ;
+//   }
 }
 
 // void ConveyorPlugin::robot_state_callback(){
@@ -136,27 +140,27 @@ void ConveyorPlugin::PreUpdate(const gz::sim::UpdateInfo &_info,
 //   conveyor_state_publisher_->publish(state_msg);
 // }
 
-void ConveyorPlugin::enable_conveyor_callback(
-  const std::shared_ptr<conveyor_interfaces::srv::EnableConveyor::Request> request, 
-  std::shared_ptr<conveyor_interfaces::srv::EnableConveyor::Response> response){
-  if(request->enable && _enabled){
-    gzmsg << "Conveyor is already enabled" << std::endl;
-    response->message = "Conveyor is already enabled";
-    response->success = false;
-    return;
-  }
+// void ConveyorPlugin::enable_conveyor_callback(
+//   const std::shared_ptr<conveyor_interfaces::srv::EnableConveyor::Request> request, 
+//   std::shared_ptr<conveyor_interfaces::srv::EnableConveyor::Response> response){
+//   if(request->enable && _enabled){
+//     gzmsg << "Conveyor is already enabled" << std::endl;
+//     response->message = "Conveyor is already enabled";
+//     response->success = false;
+//     return;
+//   }
 
-  if(!request->enable && !_enabled){
-    gzmsg << "Conveyor is already disabled" << std::endl;
-    response->message = "Conveyor is already disabled";
-    response->success = false;
-    return;
-  }
+//   if(!request->enable && !_enabled){
+//     gzmsg << "Conveyor is already disabled" << std::endl;
+//     response->message = "Conveyor is already disabled";
+//     response->success = false;
+//     return;
+//   }
 
-  _enabled = request->enable;
-  response->message = "Conveyor is now " + _enabled?"enabled":"disabled";
-  response->success = true;
-}
+//   _enabled = request->enable;
+//   response->message = "Conveyor is now " + _enabled?"enabled":"disabled";
+//   response->success = true;
+// }
 
 
 // void ConveyorPlugin::set_conveyor_state_callback(
