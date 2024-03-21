@@ -7,6 +7,7 @@
 #include <gz/sim/Joint.hh>
 
 #include <gz/transport/Node.hh>
+#include <gz/transport/Publisher.hh>
 
 #include <rclcpp/rclcpp.hpp>
 
@@ -70,6 +71,7 @@ namespace aprs_plugins
       std::thread thread_executor_spin_;
 
       gz::transport::Node gz_node;
+      gz::transport::Node::Publisher gz_node_publisher;
 
     //   // Publishers
       rclcpp::Publisher<conveyor_interfaces::msg::ConveyorState>::SharedPtr conveyor_state_publisher_;
