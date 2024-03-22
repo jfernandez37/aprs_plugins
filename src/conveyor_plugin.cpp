@@ -45,7 +45,6 @@ void ConveyorPlugin::Configure(const gz::sim::Entity &_entity,
 
   thread_executor_spin_ = std::thread(spin);
 
-  // _ros_node = rclcpp::Node::make_shared("conveyor_plugin");
   // Publisher
   this->conveyor_state_publisher_ = this->_ros_node->create_publisher<conveyor_interfaces::msg::ConveyorState>("aprs_conveyor/conveyor_state", 10);
   conveyor_state_publisher_timer_ = _ros_node->create_wall_timer(std::chrono::duration<double>(0.1), std::bind(&ConveyorPlugin::robot_state_callback, this));
@@ -77,8 +76,11 @@ void ConveyorPlugin::PreUpdate(const gz::sim::UpdateInfo &_info,
     _belt_joint.SetVelocity(_ecm, {_belt_velocity});
     return;
   }
-  _belt_joint.SetVelocity(_ecm, {((_belt_direction==0)?1:-1) * _belt_velocity});
-
+  if(_belt_direction == 0){
+    _belt_joint.SetVelocity(_ecm, {_belt_velocity});
+  }else{
+    _belt_joint.SetVelocity(_ecm, {-1 * _belt_velocity});
+  }
   double position = 0.0;
   std::optional<std::vector<double>> position_vector = _belt_joint.Position(_ecm);
   if(position_vector.has_value()){
@@ -157,7 +159,7 @@ void ConveyorPlugin::set_conveyor_state_callback(
     gzmsg << "Setting speed to " + std::to_string(request->speed) + " and direction to " + ((request->direction==0)?"forward":"backward");
 
     _belt_velocity = request->speed;
-    _belt_direction = (request->direction==0)?1:-1;
+    _belt_direction = request->direction;
     response->message = "Set speed to " + std::to_string(request->speed) + " and direction to " + ((request->direction==0)?"forward":"backward");
     response->success = true;
 }
