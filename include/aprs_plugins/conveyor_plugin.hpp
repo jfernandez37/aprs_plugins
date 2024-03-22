@@ -6,9 +6,6 @@
 #include <gz/sim/Model.hh>
 #include <gz/sim/Joint.hh>
 
-#include <gz/transport/Node.hh>
-#include <gz/transport/Publisher.hh>
-
 #include <rclcpp/rclcpp.hpp>
 
 // MSGS
@@ -28,8 +25,7 @@ namespace aprs_plugins
 {
   class ConveyorPlugin:
     public gz::sim::System,
-    public gz::sim::ISystemConfigure,
-    public gz::sim::ISystemPreUpdate
+    public gz::sim::ISystemConfigure
   {
     public: ConveyorPlugin();
  
@@ -38,13 +34,13 @@ namespace aprs_plugins
     void Configure (const gz::sim::Entity &_entity,
                       const std::shared_ptr<const sdf::Element> &_sdf,
                       gz::sim::EntityComponentManager &_ecm,
-                      gz::sim::EventManager &) override;
+                      gz::sim::EventManager &_event_manager) override;
 
-    void PreUpdate(const gz::sim::UpdateInfo &_info,
-            gz::sim::EntityComponentManager &_ecm) override;
+    // void PreUpdate(const gz::sim::UpdateInfo &_info,
+    //         gz::sim::EntityComponentManager &_ecm) override;
 
     // Conveyor callbacks
-    // void robot_state_callback();
+    // 
     // void enable_conveyor_callback(const std::shared_ptr<conveyor_interfaces::srv::EnableConveyor::Request> request, std::shared_ptr<conveyor_interfaces::srv::EnableConveyor::Response> response);
     // void set_conveyor_state_callback(const std::shared_ptr<conveyor_interfaces::srv::SetConveyorState::Request> request, std::shared_ptr<conveyor_interfaces::srv::SetConveyorState::Response> response);
 
@@ -67,17 +63,16 @@ namespace aprs_plugins
 
       rclcpp::Node::SharedPtr _ros_node;
       rclcpp::executors::MultiThreadedExecutor::SharedPtr executor_;
-      bool stop_{false};
       std::thread thread_executor_spin_;
 
-      gz::transport::Node gz_node;
-      gz::transport::Node::Publisher gz_node_publisher;
+      // gz::transport::Node gz_node;
+      // gz::transport::Node::Publisher gz_node_publisher;
 
     //   // Publishers
       rclcpp::Publisher<conveyor_interfaces::msg::ConveyorState>::SharedPtr conveyor_state_publisher_;
-
+      void robot_state_callback() const;
     //   // Timer
-      // rclcpp::TimerBase::SharedPtr conveyor_state_publisher_timer_;
+      rclcpp::TimerBase::SharedPtr conveyor_state_publisher_timer_;
       
     //   // Services
       // rclcpp::Service<conveyor_interfaces::srv::EnableConveyor>::SharedPtr enable_conveyor_service_;
