@@ -25,7 +25,8 @@ namespace aprs_plugins
 {
   class ConveyorPlugin:
     public gz::sim::System,
-    public gz::sim::ISystemConfigure
+    public gz::sim::ISystemConfigure,
+    public gz::sim::ISystemPreUpdate
   {
     public: ConveyorPlugin();
  
@@ -36,20 +37,20 @@ namespace aprs_plugins
                       gz::sim::EntityComponentManager &_ecm,
                       gz::sim::EventManager &_event_manager) override;
 
-    // void PreUpdate(const gz::sim::UpdateInfo &_info,
-    //         gz::sim::EntityComponentManager &_ecm) override;
+    void PreUpdate(const gz::sim::UpdateInfo &_info,
+            gz::sim::EntityComponentManager &_ecm) override;
 
     // Conveyor callbacks
     // 
-    // void enable_conveyor_callback(const std::shared_ptr<conveyor_interfaces::srv::EnableConveyor::Request> request, std::shared_ptr<conveyor_interfaces::srv::EnableConveyor::Response> response);
-    // void set_conveyor_state_callback(const std::shared_ptr<conveyor_interfaces::srv::SetConveyorState::Request> request, std::shared_ptr<conveyor_interfaces::srv::SetConveyorState::Response> response);
+    void enable_conveyor_callback(const std::shared_ptr<conveyor_interfaces::srv::EnableConveyor::Request> request, std::shared_ptr<conveyor_interfaces::srv::EnableConveyor::Response> response);
+    void set_conveyor_state_callback(const std::shared_ptr<conveyor_interfaces::srv::SetConveyorState::Request> request, std::shared_ptr<conveyor_interfaces::srv::SetConveyorState::Response> response);
 
     private: 
       gz::sim::Model _model;
       
       gz::sim::Joint _belt_joint;
       
-      bool _enabled = true;
+      bool _enabled = false;
       
       int _belt_direction = 1;
 
@@ -75,8 +76,8 @@ namespace aprs_plugins
       rclcpp::TimerBase::SharedPtr conveyor_state_publisher_timer_;
       
     //   // Services
-      // rclcpp::Service<conveyor_interfaces::srv::EnableConveyor>::SharedPtr enable_conveyor_service_;
-    //   rclcpp::Service<conveyor_interfaces::srv::SetConveyorState>::SharedPtr set_conveyor_state_service_;
+      rclcpp::Service<conveyor_interfaces::srv::EnableConveyor>::SharedPtr enable_conveyor_service_;
+      rclcpp::Service<conveyor_interfaces::srv::SetConveyorState>::SharedPtr set_conveyor_state_service_;
   };
 }
 
