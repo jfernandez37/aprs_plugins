@@ -2,6 +2,8 @@
 #include <gz/common/Console.hh>
 #include <aprs_plugins/conveyor_plugin.hpp>
 
+#include <time.h>
+
 // Include a line in your source file for each interface implemented.
 GZ_ADD_PLUGIN(
     aprs_plugins::ConveyorPlugin,
@@ -17,6 +19,8 @@ ConveyorPlugin::ConveyorPlugin()
  
 ConveyorPlugin::~ConveyorPlugin()
 {
+  executor_->cancel();
+  thread_executor_spin_.join();
 }
 
 void ConveyorPlugin::Configure(const gz::sim::Entity &_entity,
@@ -29,16 +33,29 @@ void ConveyorPlugin::Configure(const gz::sim::Entity &_entity,
   _belt_joint.EnablePositionCheck(_ecm, true);
   _max_velocity = _sdf->GetElementImpl("max_velocity")->Get<double>();
 
-  if (!rclcpp::ok()){
-    rclcpp::init(0, nullptr);
+  std::vector<std::string> arguments = {"--ros-args"};
+  arguments.push_back(RCL_PARAM_FILE_FLAG);
+  arguments.push_back(ament_index_cpp::get_package_share_directory("aprs_description")+"/config/ns_robot_controllers.yaml");
+  
+  std::vector<const char *> argv;
+  for (const auto & arg : arguments) {
+    argv.push_back(reinterpret_cast<const char *>(arg.data()));
+  }
+  
+  if (!rclcpp::ok(conveyor_context)){
+    rclcpp::init(static_cast<int>(argv.size()), argv.data());
   }
 
-  _ros_node = rclcpp::Node::make_shared("conveyor_plugin_node");
+  std::string node_name = "conveyor_ros_node";
+
+  _ros_node = rclcpp::Node::make_shared(node_name);
+
+  std::cout << "NODE SET" << std::endl;
   executor_ = std::make_shared<rclcpp::executors::MultiThreadedExecutor>();
   executor_->add_node(_ros_node);
 
   auto spin = [this](){
-    while(rclcpp::ok()){
+    while(rclcpp::ok(conveyor_context)){
       executor_->spin_once();
     }
   };

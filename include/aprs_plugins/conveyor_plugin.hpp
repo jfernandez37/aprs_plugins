@@ -21,6 +21,8 @@
 #include <memory>
 #include <string>
 
+#include <ament_index_cpp/get_package_share_directory.hpp>
+
 namespace aprs_plugins
 {
   class ConveyorPlugin:
@@ -65,6 +67,8 @@ namespace aprs_plugins
       rclcpp::Node::SharedPtr _ros_node;
       rclcpp::executors::MultiThreadedExecutor::SharedPtr executor_;
       std::thread thread_executor_spin_;
+
+      rclcpp::Context::SharedPtr conveyor_context;
 
       // gz::transport::Node gz_node;
       // gz::transport::Node::Publisher gz_node_publisher;
