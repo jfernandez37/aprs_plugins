@@ -43,7 +43,7 @@ void ConveyorPlugin::Configure(const gz::sim::Entity &_entity,
   }
   
   if (!rclcpp::ok(conveyor_context)){
-    rclcpp::init(static_cast<int>(argv.size()), argv.data());
+    rclcpp::init(0, nullptr);
   }
 
   std::string node_name = "conveyor_ros_node";
